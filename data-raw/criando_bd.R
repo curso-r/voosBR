@@ -57,7 +57,6 @@ tab_empresas <- readxl::read_excel(
     )
   )
 
-
 con <- RSQLite::dbConnect(RSQLite::SQLite(), "brflights.sqlite")
 
 RSQLite::dbWriteTable(con, "tab_voos", value = tab_voos)
