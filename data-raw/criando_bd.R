@@ -4,14 +4,19 @@ tab_voos <- dados |>
   dplyr::mutate(
     dplyr::across(
       dplyr::ends_with("date"),
-      ~ .x |> lubridate::dmy_hm()
+      ~ stringr::str_extract(.x, "[0-9]{2}:[0-9]{2}$"),
+      .names = "{.col}_hm"
     ),
-    year = lubridate::year(planned_departure_date),
+    dplyr::across(
+      dplyr::ends_with("date"),
+      ~ .x |> lubridate::dmy_hm() |> as.Date()
+    ),
     dplyr::across(
       dplyr::ends_with("date"),
       ~ .x |> lubridate::floor_date(unit = "months"),
       .names = "{.col}_ym"
-    )
+    ),
+    year = lubridate::year(planned_departure_date_ym)
   ) |>
   dplyr::filter(
     lubridate::year(actual_departure_date) %in% 2019:2023,
@@ -23,6 +28,8 @@ tab_voos <- dados |>
       as.character
     )
   )
+
+# dplyr::glimpse(tab_voos)
 
 
 tab_aeroportos <- readxl::read_excel(
@@ -59,9 +66,9 @@ tab_empresas <- readxl::read_excel(
 
 con <- RSQLite::dbConnect(RSQLite::SQLite(), "brflights.sqlite")
 
-RSQLite::dbWriteTable(con, "tab_voos", value = tab_voos)
-RSQLite::dbWriteTable(con, "tab_aeroportos", value = tab_aeroportos)
-RSQLite::dbWriteTable(con, "tab_empresas", value = tab_empresas)
+RSQLite::dbWriteTable(con, "tab_voos", value = tab_voos, overwrite = TRUE)
+RSQLite::dbWriteTable(con, "tab_aeroportos", value = tab_aeroportos, overwrite = TRUE)
+RSQLite::dbWriteTable(con, "tab_empresas", value = tab_empresas, overwrite = TRUE)
 
 RSQLite::dbDisconnect(con)
 
