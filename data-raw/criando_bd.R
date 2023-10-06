@@ -20,7 +20,8 @@ tab_voos <- dados |>
   ) |>
   dplyr::filter(
     lubridate::year(actual_departure_date) %in% 2019:2023,
-    lubridate::year(actual_arrival_date) %in% 2019:2023
+    lubridate::year(actual_arrival_date) %in% 2019:2023,
+    flight_type %in% c("I", "N")
   ) |>
   dplyr::mutate(
     dplyr::across(
@@ -71,8 +72,5 @@ RSQLite::dbWriteTable(con, "tab_aeroportos", value = tab_aeroportos, overwrite =
 RSQLite::dbWriteTable(con, "tab_empresas", value = tab_empresas, overwrite = TRUE)
 
 RSQLite::dbDisconnect(con)
-
-
-
 
 

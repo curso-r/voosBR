@@ -1,86 +1,82 @@
 library(shiny)
+library(bs4Dash)
 library(ggplot2)
 
-ui <- navbarPage(
-  title = "vôosBR",
-  tabPanel(
-    title = "Visão geral",
-    titlePanel("Visão geral"),
-    hr(),
-    dateRangeInput(
-      inputId = "vg_periodo",
-      label = "Selecione um período",
-      start = "2019-01-01",
-      end = "2023-07-31",
-      min = "2019-01-01",
-      max = "2023-07-31",
-      language = "pt-BR",
-      format = "dd/mm/yyyy",
-      separator = "a"
-    ),
-    fluidRow(
-      column(
-        width = 4,
-        # num voos total
-        # num partidas
-        # num chegadas
-        # num empresas aereas que atuaram no periodo
-        # num aeroportos com voos no periodo
-      ),
-      column(
-        width = 8,
-        plotOutput("vg_serie_historica_partidas"),
-        plotOutput("vg_serie_historica_chegadas")
+ui <- bs4DashPage(
+  dark = NULL,
+  help = NULL,
+  header = bs4DashNavbar(
+    title = "voosBR"
+  ),
+  sidebar = bs4DashSidebar(
+    bs4SidebarMenu(
+      bs4SidebarMenuItem(
+        text = "Visão geral",
+        tabName = "visao_geral",
+        icon = icon("eye")
       )
     )
   ),
-  tabPanel(
-    title = "Partidas"
-  ),
-  tabPanel(
-    title = "Chegadas"
-  ),
-  tabPanel(
-    title = "Aeroportos"
-  ),
-  tabPanel(
-    title = "Companhias aéreas"
-  ),
-  tabPanel(
-    title = "Localidade"
-  ),
-  tabPanel(
-    title = "Sobre"
+  body = bs4DashBody(
+    tags$head(
+      tags$link(rel = "stylesheet", href = "custom.css")
+    ),
+    bs4TabItems(
+      bs4TabItem(
+        tabName = "visao_geral",
+        titlePanel("Visão geral"),
+        hr(),
+        fluidRow(
+          bs4ValueBoxOutput(
+            "vg_num_voos",
+            width = 4
+          ),
+          bs4ValueBoxOutput(
+            "vg_num_voos_domesticos",
+            width = 4
+          ),
+          bs4ValueBoxOutput(
+            "vg_num_voos_inter"
+          )
+        ),
+        fluidRow(
+          bs4Card(
+            width = 12,
+            title = "Número de voos domésticos e internacionais",
+            plotOutput("vg_serie_voos") |>
+              shinycssloaders::withSpinner(),
+            collapsible = FALSE
+          )
+        ),
+        fluidRow(
+          bs4TabCard(
+            width = 6,
+            height = 642,
+            title = "Aeroportos com mais voos",
+            side = "right",
+            collapsible = FALSE,
+            tabPanel(
+              title = "Partidas",
+              tableOutput("vg_tab_aero_partidas")
+            ),
+            tabPanel(
+              title = "Chegadas",
+              tableOutput("vg_tab_aero_chegadas")
+            )
+          ),
+          bs4Card(
+            width = 6,
+            height = 660,
+            title = "Empresas com mais voos",
+            side = "right",
+            collapsible = FALSE,
+            tableOutput("vg_tab_emp")
+          )
+        )
+      )
+    )
   )
 )
-
-# ui <- fluidPage(
-#   titlePanel("Painel de vôos do Brasil"),
-#   hr(),
-#   selectInput(
-#     inputId = "ano",
-#     label = "Selecione um ano",
-#     # choices = unique(c(
-#     #   dados$planned_departure_date_year,
-#     #   dados$actual_arrival_date_year
-#     # ))
-#     choices = 2019:2023
-#   ),
-#   plotOutput("numero_voos_por_mes"),
-#   hr(),
-#   dateRangeInput(
-#     inputId = "periodo",
-#     label = "Selecione um período",
-#     start = "2023-01-01",
-#     end = "2023-01-01",
-#     min = "2019-01-01",
-#     max = "2023-07-31",
-#     language = "pt-BR",
-#     format = "dd/mm/yyyy",
-#     separator = "a"
-#   ),
-#   tableOutput("tabela_voos")
-# )
 
 server <- function(input, output, session) {
 
@@ -90,42 +86,123 @@ server <- function(input, output, session) {
   )
 
   tab_voos <- dplyr::tbl(con, "tab_voos")
+  tab_aeroportos <- dplyr::tbl(con, "tab_aeroportos")
+  tab_empresas <- dplyr::tbl(con, "tab_empresas")
 
-  output$vg_serie_historica_partidas <- renderPlot({
-    tab_voos |>
-      dplyr::filter(
-        actual_departure_date >= !!input$vg_periodo[1],
-        actual_departure_date <= !!input$vg_periodo[2]
-      ) |>
-      dplyr::count(planned_departure_date_ym) |>
-      dplyr::collect() |>
-      dplyr::mutate(
-        planned_departure_date_ym = as.Date(planned_departure_date_ym)
-      ) |>
-      ggplot(aes(x = planned_departure_date_ym, y = n)) +
-      geom_line(color = "black", fill = "royalblue") +
-      theme_minimal()
+  output$vg_num_voos <- renderbs4ValueBox({
+    valor <- tab_voos |>
+      contar_linhas() |>
+      formatar_numero()
+    bs4ValueBox(
+      value = valor,
+      subtitle = "Total de voos",
+      icon = icon("plane"),
+      color = "lightblue"
+    )
   })
 
-  # output$tabela_voos <- renderTable({
-  #
-  #   tab_voos |>
-  #     dplyr::filter(
-  #       actual_departure_date >= !!input$periodo[1],
-  #       actual_departure_date <= !!input$periodo[2],
-  #     ) |>
-  #     head(20) |>
-  #     dplyr::select(
-  #       airline,
-  #       flight_number,
-  #       origin_airport,
-  #       destination_airport,
-  #       actual_departure_date,
-  #       actual_arrival_date
-  #     ) |>
-  #     dplyr::collect()
-  #
-  # })
+  output$vg_num_voos_domesticos <- renderbs4ValueBox({
+    valor <- tab_voos |>
+      dplyr::filter(flight_type == "N") |>
+      contar_linhas() |>
+      formatar_numero()
+
+
+    bs4ValueBox(
+      value = valor,
+      subtitle = "Número de voos domésticos",
+      icon = icon("home"),
+      color = "lightblue"
+    )
+  })
+
+  output$vg_num_voos_inter <- renderbs4ValueBox({
+    valor <- tab_voos |>
+      dplyr::filter(flight_type == "I") |>
+      contar_linhas() |>
+      formatar_numero()
+
+
+    bs4ValueBox(
+      value = valor,
+      subtitle = "Número de voos internacionais",
+      icon = icon("globe"),
+      color = "lightblue"
+    )
+  })
+
+  output$vg_serie_voos <- renderPlot({
+    tab_voos |>
+      dplyr::count(flight_type, planned_departure_date_ym) |>
+      dplyr::filter(
+        !is.na(planned_departure_date_ym)
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        data = as.Date(planned_departure_date_ym)
+      ) |>
+      ggplot(aes(x = data, y = n, color = flight_type)) +
+      geom_line() +
+      theme_minimal()
+
+  })
+
+  output$vg_tab_aero_partidas <- renderTable({
+    tab_voos |>
+      dplyr::count(origin_airport, sort = TRUE) |>
+      head(10) |>
+      dplyr::left_join(
+        tab_aeroportos,
+        by = c("origin_airport" = "airport_cod")
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        n = formatar_numero(n)
+      ) |>
+      dplyr::select(
+       Aeroporto = airport_name,
+       cidade = city,
+       `Número de voos` = n
+      )
+
+  })
+
+  output$vg_tab_aero_chegadas <- renderTable({
+    tab_voos |>
+      dplyr::count(destination_airport, sort = TRUE) |>
+      head(10) |>
+      dplyr::left_join(
+        tab_aeroportos,
+        by = c("destination_airport" = "airport_cod")
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        n = formatar_numero(n)
+      ) |>
+      dplyr::select(
+        Aeroporto = airport_name,
+        cidade = city,
+        `Número de voos` = n
+      )
+  })
+
+  output$vg_tab_emp <- renderTable({
+    tab_voos |>
+      dplyr::count(airline, sort = TRUE) |>
+      head(10) |>
+      dplyr::left_join(
+        tab_empresas,
+        by = c("airline" = "airline_cod")
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        n = formatar_numero(n)
+      ) |>
+      dplyr::select(
+        `Empresa aérea` = airline_name,
+        `Número de voos` = n
+      )
+  })
 
 
 }
