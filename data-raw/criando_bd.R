@@ -34,8 +34,7 @@ tab_voos <- dados |>
 
 
 tab_aeroportos <- readxl::read_excel(
-  "data-raw/glossario_de_aerodromo.xls",
-  skip = 3
+  "data-raw/glossario_de_aerodromo.xlsx"
 ) |>
   janitor::clean_names() |>
   dplyr::rename(
