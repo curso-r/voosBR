@@ -1,0 +1,4 @@
+- link da live sobre a coleta dos dados
+- link para o repositório
+- link para bslib
+- dados
