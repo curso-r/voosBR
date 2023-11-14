@@ -9,6 +9,6 @@ app_server <- function(input, output, session) {
 
   con <- RSQLite::dbConnect(RSQLite::SQLite(), "brflights.sqlite")
 
-  mod_visao_geral_server("visao_geral_1")
+  mod_visao_geral_server("visao_geral_1", con)
 
 }
