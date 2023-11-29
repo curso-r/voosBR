@@ -13,18 +13,7 @@ mod_visao_geral_ui <- function(id) {
     bslib::page_sidebar(
       fillable = FALSE,
       sidebar = bslib::sidebar(
-        h6("Filtros"),
-        dateRangeInput(
-          inputId = ns("periodo"),
-          label = "Selecione um período",
-          start = Sys.Date(),
-          end = Sys.Date(),
-          min = "2019-01-01",
-          max = Sys.Date(),
-          format = "dd/mm/yy",
-          separator = " a ",
-          language = "pt-BR"
-        )
+        mod_filtro_periodo_ui(ns("filtro_periodo_1"))
       ),
       bslib::card(
         bslib::card_header(
@@ -68,39 +57,13 @@ mod_visao_geral_server <- function(id, con) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    tab_voos <- dplyr::tbl(con, "tab_voos")
     tab_aeroportos <- dplyr::tbl(con, "tab_aeroportos")
     tab_empresas <- dplyr::tbl(con, "tab_empresas")
 
-    data_min <- tab_voos |>
-      dplyr::summarise(
-        data_min = min(planned_departure_date, na.rm = TRUE)
-      ) |>
-      dplyr::pull(data_min)
-
-    data_max <- tab_voos |>
-      dplyr::summarise(
-        data_max = max(planned_departure_date, na.rm = TRUE)
-      ) |>
-      dplyr::pull(data_max)
-
-    updateDateRangeInput(
-      session = session,
-      inputId = "periodo",
-      start = data_min,
-      end = data_max,
-      min = data_min,
-      max = data_max
+    dados_filtrados <- mod_filtro_periodo_server(
+      "filtro_periodo_1",
+      con
     )
-
-    dados_filtrados <- reactive({
-      req(input$periodo[1] != input$periodo[2])
-      tab_voos |>
-        dplyr::filter(
-          planned_departure_date <= !!input$periodo[2] &
-            planned_departure_date >= !!input$periodo[1]
-        )
-    })
 
     output$serie_historica <- echarts4r::renderEcharts4r({
       dados_filtrados() |>

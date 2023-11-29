@@ -16,10 +16,11 @@ app_ui <- function(request) {
         mod_visao_geral_ui("visao_geral_1")
       ),
       bslib::nav_panel(
-        title = "Chegadas"
+        title = "Partidas",
+        mod_partidas_ui("partidas_1")
       ),
       bslib::nav_panel(
-        title = "Partidas"
+        title = "Chegadas"
       ),
       bslib::nav_panel(
         title = "Aeroportos"
