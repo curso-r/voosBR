@@ -1,13 +1,19 @@
+# Baixando base de dados -----------------------------------------------
+
 anos <- 2019:2023
 
-tab <- flightsbr::read_flights(2019)
+tabelas <- purrr::map(
+  anos,
+  flightsbr::read_flights
+)
 
-tab |>
+tab_voos <- tabelas |> 
+  dplyr::bind_rows() |> 
   dplyr::select(
     id_empresa,
     sg_empresa_iata,
     nm_empresa,
-    sd_tipo_empresa,
+    ds_tipo_empresa,
     nm_pais,
     dt_referencia,
     nr_ano_referencia,
@@ -69,4 +75,54 @@ tab |>
     nr_decolagem,
     nr_horas_voadas,
     nr_velocidade_media
+  )
+
+con <- RSQLite::dbConnect(
+  RSQLite::SQLite(),
+  "flightsbr.sqlite"
+)
+
+RSQLite::dbWriteTable(
+  con,
+  "tab_voos",
+  tab_voos,
+  overwrite = TRUE
+)
+
+# Criando tabelas resumo ---------------------------------------------- 
+
+con <- RSQLite::dbConnect(
+  RSQLite::SQLite(),
+  "flightsbr.sqlite"
+)
+
+tab_voos <- dplyr::tbl(con, "tab_voos")
+
+# tab_voos |> dplyr::glimpse()
+
+tab_voos |> 
+  dplyr::distinct(ds_natureza_etapa)
+
+tab_voos |> 
+  dplyr::group_by(
+    nr_ano_referencia,
+    nr_mes_referencia,
+    ds_tipo_linha,
+    ds_natureza_etapa
+  ) |> 
+  dplyr::summarise(
+    nr_voos = n(),
+    .groups = "drop"
+  ) |> 
+  dplyr::collect() |> 
+  dplyr::mutate(
+    dt_mes_ano = lubridate::make_date(
+      year = nr_ano_referencia,
+      month = nr_mes_referencia,
+      day = 1
+    )
+  ) |> 
+  dplyr::select(
+    dt_mes_ano,
+    nr_voos
   )
