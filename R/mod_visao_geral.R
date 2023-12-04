@@ -57,9 +57,6 @@ mod_visao_geral_server <- function(id, con) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    tab_aeroportos <- dplyr::tbl(con, "tab_aeroportos")
-    tab_empresas <- dplyr::tbl(con, "tab_empresas")
-
     dados_filtrados <- mod_filtro_periodo_server(
       "filtro_periodo_1",
       con

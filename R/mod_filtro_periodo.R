@@ -34,17 +34,11 @@ mod_filtro_periodo_server <- function(id, con) {
 
     tab_voos <- dplyr::tbl(con, "tab_voos")
 
-    data_min <- tab_voos |>
+    datas <- tab_voos |>
       dplyr::summarise(
-        data_min = min(planned_departure_date, na.rm = TRUE)
-      ) |>
-      dplyr::pull(data_min)
-
-    data_max <- tab_voos |>
-      dplyr::summarise(
-        data_max = max(planned_departure_date, na.rm = TRUE)
-      ) |>
-      dplyr::pull(data_max)
+        data_min = min(dt_partida_real, na.rm = TRUE),
+        data_max = max(dt_partida_real, na.rm = TRUE)
+      )
 
     updateDateRangeInput(
       session = session,
