@@ -64,13 +64,13 @@ mod_visao_geral_server <- function(id, con) {
 
     output$serie_historica <- echarts4r::renderEcharts4r({
       dados_filtrados() |>
-        dplyr::group_by(planned_departure_date) |>
+        dplyr::group_by(dt_partida_real) |>
         dplyr::summarise(n = n()) |>
         dplyr::collect() |>
         dplyr::mutate(
-          planned_departure_date = lubridate::as_date(planned_departure_date)
+          dt_partida_real = lubridate::as_date(dt_partida_real)
         ) |>
-        echarts4r::e_charts(x = planned_departure_date) |>
+        echarts4r::e_charts(x = dt_partida_real) |>
         echarts4r::e_bar(serie = n) |>
         echarts4r::e_tooltip(trigger = "axis") |>
         echarts4r::e_datazoom(
@@ -100,18 +100,14 @@ mod_visao_geral_server <- function(id, con) {
 
     output$tabela_aeroportos_part <- reactable::renderReactable({
       dados_filtrados() |>
-        dplyr::group_by(origin_airport) |>
-        dplyr::summarise(n = dplyr::n()) |>
+        dplyr::group_by(nm_aerodromo_origem, nm_municipio_origem) |>
+        dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
         dplyr::arrange(desc(n)) |>
         head(5) |>
-        dplyr::left_join(
-          tab_aeroportos,
-          by = c("origin_airport" = "airport_cod")
-        ) |>
         dplyr::collect() |>
         dplyr::select(
-          airport_name,
-          city,
+          nm_aerodromo_origem,
+          nm_municipio_origem,
           n
         ) |>
         dplyr::mutate(
@@ -119,7 +115,7 @@ mod_visao_geral_server <- function(id, con) {
         ) |>
         reactable_padrao(
           columns = list(
-            airport_name = reactable::colDef(
+            nm_aerodromo_origem = reactable::colDef(
               name = "Aeroporto",
               minWidth = 250
             ),
@@ -127,7 +123,7 @@ mod_visao_geral_server <- function(id, con) {
               name = "Número de vôos",
               align = "right"
             ),
-            city = reactable::colDef(
+            nm_municipio_origem = reactable::colDef(
               name = "Cidade"
             )
           )
@@ -136,18 +132,14 @@ mod_visao_geral_server <- function(id, con) {
 
     output$tabela_aeroportos_cheg <- reactable::renderReactable({
       dados_filtrados() |>
-        dplyr::group_by(destination_airport) |>
-        dplyr::summarise(n = dplyr::n()) |>
+        dplyr::group_by(nm_aerodromo_destino, nm_municipio_destino) |>
+        dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
         dplyr::arrange(desc(n)) |>
         head(5) |>
-        dplyr::left_join(
-          tab_aeroportos,
-          by = c("destination_airport" = "airport_cod")
-        ) |>
         dplyr::collect() |>
         dplyr::select(
-          airport_name,
-          city,
+          nm_aerodromo_destino,
+          nm_municipio_destino,
           n
         ) |>
         dplyr::mutate(
@@ -155,7 +147,7 @@ mod_visao_geral_server <- function(id, con) {
         ) |>
         reactable_padrao(
           columns = list(
-            airport_name = reactable::colDef(
+            nm_aerodromo_destino = reactable::colDef(
               name = "Aeroporto",
               minWidth = 250
             ),
@@ -163,7 +155,7 @@ mod_visao_geral_server <- function(id, con) {
               name = "Número de vôos",
               align = "right"
             ),
-            city = reactable::colDef(
+            nm_municipio_destino = reactable::colDef(
               name = "Cidade"
             )
           )
@@ -172,25 +164,17 @@ mod_visao_geral_server <- function(id, con) {
 
     output$tabela_empresas <- reactable::renderReactable({
       dados_filtrados() |>
-        dplyr::group_by(airline) |>
+        dplyr::group_by(nm_empresa) |>
         dplyr::summarise(n = dplyr::n()) |>
         dplyr::arrange(desc(n)) |>
         head(5) |>
-        dplyr::left_join(
-          tab_empresas,
-          by = c("airline" = "airline_cod")
-        ) |>
-        dplyr::select(
-          airline_name,
-          n
-        ) |>
         dplyr::collect() |>
         dplyr::mutate(
           n = formatar_numero(n)
         ) |>
         reactable_padrao(
           columns = list(
-            airline_name = reactable::colDef(
+            nm_empresa = reactable::colDef(
               name = "Empresa aérea"
             ),
             n = reactable::colDef(

@@ -36,25 +36,26 @@ mod_filtro_periodo_server <- function(id, con) {
 
     datas <- tab_voos |>
       dplyr::summarise(
-        data_min = min(dt_partida_real, na.rm = TRUE),
-        data_max = max(dt_partida_real, na.rm = TRUE)
-      )
+        min = min(dt_partida_real, na.rm = TRUE),
+        max = max(dt_partida_real, na.rm = TRUE)
+      ) |> 
+      dplyr::collect()
 
     updateDateRangeInput(
       session = session,
       inputId = "periodo",
-      start = data_min,
-      end = data_max,
-      min = data_min,
-      max = data_max
+      start = datas$min,
+      end = datas$max,
+      min = datas$min,
+      max = datas$max
     )
 
     dados_filtrados <- reactive({
       req(input$periodo[1] != input$periodo[2])
       tab_voos |>
         dplyr::filter(
-          planned_departure_date <= !!input$periodo[2] &
-            planned_departure_date >= !!input$periodo[1]
+          dt_partida_real <= !!input$periodo[2] &
+            dt_partida_real >= !!input$periodo[1]
         )
     })
 

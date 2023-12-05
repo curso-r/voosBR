@@ -89,6 +89,42 @@ RSQLite::dbWriteTable(
   overwrite = TRUE
 )
 
+# Ajustando dados -----------------------------------------------------
+
+con <- RSQLite::dbConnect(
+  RSQLite::SQLite(),
+  "flightsbr.sqlite"
+)
+
+tab_voos <- dplyr::tbl(con, "tab_voos") |> 
+  dplyr::collect()
+
+mudar_encoding <- function(x) {
+  Encoding(x) <- "latin1"
+  x
+}
+
+tab <- tab_voos |> 
+  dplyr::filter(
+    dt_partida_real >= "2019-01-01",
+    dt_partida_real <= "2023-12-31"
+  ) |> 
+  dplyr::mutate(
+    dplyr::across(
+      where(is.character),
+      mudar_encoding
+    )
+  )
+
+RSQLite::dbWriteTable(
+  con,
+  "tab_voos",
+  dplyr::collect(tab),
+  overwrite = TRUE
+)
+
+RSQLite::dbDisconnect(con)
+
 # Criando tabelas resumo ---------------------------------------------- 
 
 con <- RSQLite::dbConnect(
