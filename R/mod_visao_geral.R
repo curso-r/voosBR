@@ -13,7 +13,7 @@ mod_visao_geral_ui <- function(id) {
     bslib::page_sidebar(
       fillable = FALSE,
       sidebar = bslib::sidebar(
-        mod_filtro_periodo_ui(ns("filtro_periodo_1"))
+        mod_filtros_ui(ns("filtros_1"))
       ),
       bslib::card(
         bslib::card_header(
@@ -57,10 +57,7 @@ mod_visao_geral_server <- function(id, con) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    dados_filtrados <- mod_filtro_periodo_server(
-      "filtro_periodo_1",
-      con
-    )
+    dados_filtrados <- mod_filtros_server("filtros_1", con)
 
     output$serie_historica <- echarts4r::renderEcharts4r({
       dados_filtrados() |>

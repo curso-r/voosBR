@@ -7,6 +7,16 @@ formatar_numero <- function(x, acc = 1) {
   )
 }
 
+picker_input <- function(inputId, ...) {
+  shinyWidgets::pickerInput(
+      inputId = inputId,
+      ...,
+      options = list(
+        `actions-box` = TRUE
+      )
+    )
+}
+
 reactable_padrao <- function(tab, ...) {
   tab |>
     reactable::reactable(
@@ -18,3 +28,18 @@ reactable_padrao <- function(tab, ...) {
       )
     )
 }
+
+ver_a_base <- function() {
+  con <- RSQLite::dbConnect(RSQLite::SQLite(), "flightsbr.sqlite")
+  dplyr::tbl(con, "tab_voos") |> 
+    dplyr::glimpse()
+}
+
+ver_coluna <- function(...) {
+  con <- RSQLite::dbConnect(RSQLite::SQLite(), "flightsbr.sqlite")
+  dplyr::tbl(con, "tab_voos") |> 
+    dplyr::distinct(...)
+}
+
+
+

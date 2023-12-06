@@ -125,6 +125,9 @@ RSQLite::dbWriteTable(
 
 RSQLite::dbDisconnect(con)
 
+
+
+
 # Criando tabelas resumo ---------------------------------------------- 
 
 con <- RSQLite::dbConnect(

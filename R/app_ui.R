@@ -15,18 +15,20 @@ app_ui <- function(request) {
         title = "Visão geral",
         mod_visao_geral_ui("visao_geral_1")
       ),
-      bslib::nav_panel(
-        title = "Partidas",
-        mod_partidas_ui("partidas_1")
+      bslib::nav_menu(
+        title = "Voos",
+        bslib::nav_panel(
+          title = "Partidas",
+          mod_voos_ui("voos_partida")
+        ),
+        bslib::nav_panel(
+          title = "Chegadas",
+          mod_voos_ui("voos_chegada")
+        )
       ),
       bslib::nav_panel(
-        title = "Chegadas"
-      ),
-      bslib::nav_panel(
-        title = "Aeroportos"
-      ),
-      bslib::nav_panel(
-        title = "Companhias"
+        title = "Visão temporal",
+        mod_visao_temporal_ui("visao_temporal_1")
       )
     )
   )
