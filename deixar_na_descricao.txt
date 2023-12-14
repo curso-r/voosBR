@@ -1,1 +1,4 @@
  https://github.com/curso-r/voosBR/blob/main/data-raw/criando_bd_flightsbr.R
+
+
+ fazer unboxing do pacote poorman

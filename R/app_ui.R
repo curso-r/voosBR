@@ -29,6 +29,10 @@ app_ui <- function(request) {
       bslib::nav_panel(
         title = "Visão temporal",
         mod_visao_temporal_ui("visao_temporal_1")
+      ),
+      bslib::nav_panel(
+        title = "Aeroportos",
+        mod_aeroportos_ui("aeroportos_1")
       )
     )
   )

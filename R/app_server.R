@@ -13,4 +13,5 @@ app_server <- function(input, output, session) {
   mod_voos_server("voos_partida", con, tipo_aeroporto = "origem")
   mod_voos_server("voos_chegada", con, tipo_aeroporto = "destino")
   mod_visao_temporal_server("visao_temporal_1", con)
+  mod_aeroportos_server("aeroportos_1", con)
 }
