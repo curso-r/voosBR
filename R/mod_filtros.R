@@ -50,11 +50,7 @@ mod_filtros_server <- function(id, con) {
 
     tab_voos <- dplyr::tbl(con, "tab_voos")
 
-    datas <- tab_voos |>
-      dplyr::summarise(
-        min = min(dt_partida_real, na.rm = TRUE),
-        max = max(dt_partida_real, na.rm = TRUE)
-      ) |> 
+    datas <- dplyr::tbl(con, "tab_datas") |>
       dplyr::collect()
 
     updateDateRangeInput(
@@ -66,8 +62,7 @@ mod_filtros_server <- function(id, con) {
       max = datas$max
     )
 
-    opcoes_natureza <- tab_voos |> 
-        dplyr::distinct(ds_natureza_tipo_linha) |> 
+    opcoes_natureza <- dplyr::tbl(con, "tab_natureza") |> 
         dplyr::pull(ds_natureza_tipo_linha)
 
     shinyWidgets::updatePickerInput(
@@ -77,8 +72,7 @@ mod_filtros_server <- function(id, con) {
       selected = opcoes_natureza
     )
 
-    opcoes_servico <- tab_voos |> 
-        dplyr::distinct(ds_servico_tipo_linha) |> 
+    opcoes_servico <- dplyr::tbl(con, "tab_servico") |> 
         dplyr::pull(ds_servico_tipo_linha)
 
     shinyWidgets::updatePickerInput(

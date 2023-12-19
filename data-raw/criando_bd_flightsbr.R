@@ -7,8 +7,8 @@ tabelas <- purrr::map(
   flightsbr::read_flights
 )
 
-tab_voos <- tabelas |> 
-  dplyr::bind_rows() |> 
+tab_voos <- tabelas |>
+  dplyr::bind_rows() |>
   dplyr::select(
     id_empresa,
     sg_empresa_iata,
@@ -96,7 +96,7 @@ con <- RSQLite::dbConnect(
   "flightsbr.sqlite"
 )
 
-tab_voos <- dplyr::tbl(con, "tab_voos") |> 
+tab_voos <- dplyr::tbl(con, "tab_voos") |>
   dplyr::collect()
 
 mudar_encoding <- function(x) {
@@ -104,11 +104,11 @@ mudar_encoding <- function(x) {
   x
 }
 
-tab <- tab_voos |> 
+tab <- tab_voos |>
   dplyr::filter(
     dt_partida_real >= "2019-01-01",
     dt_partida_real <= "2023-12-31"
-  ) |> 
+  ) |>
   dplyr::mutate(
     dplyr::across(
       where(is.character),
@@ -125,10 +125,7 @@ RSQLite::dbWriteTable(
 
 RSQLite::dbDisconnect(con)
 
-
-
-
-# Criando tabelas resumo ---------------------------------------------- 
+# Criando tabelas resumo ----------------------------------------------
 
 con <- RSQLite::dbConnect(
   RSQLite::SQLite(),
@@ -137,31 +134,63 @@ con <- RSQLite::dbConnect(
 
 tab_voos <- dplyr::tbl(con, "tab_voos")
 
-# tab_voos |> dplyr::glimpse()
-
-tab_voos |> 
-  dplyr::distinct(ds_natureza_etapa)
-
-tab_voos |> 
-  dplyr::group_by(
-    nr_ano_referencia,
-    nr_mes_referencia,
-    ds_tipo_linha,
-    ds_natureza_etapa
-  ) |> 
+tab_datas <- tab_voos |>
   dplyr::summarise(
-    nr_voos = n(),
-    .groups = "drop"
-  ) |> 
-  dplyr::collect() |> 
-  dplyr::mutate(
-    dt_mes_ano = lubridate::make_date(
-      year = nr_ano_referencia,
-      month = nr_mes_referencia,
-      day = 1
-    )
-  ) |> 
-  dplyr::select(
-    dt_mes_ano,
-    nr_voos
-  )
+    min = min(dt_partida_real, na.rm = TRUE),
+    max = max(dt_partida_real, na.rm = TRUE)
+  ) |>
+  dplyr::collect()
+
+tab_natureza <- tab_voos |>
+  dplyr::distinct(ds_natureza_tipo_linha) |>
+  dplyr::collect()
+
+tab_servico <- tab_voos |>
+  dplyr::distinct(ds_servico_tipo_linha) |>
+  dplyr::collect()
+
+tab_estados <- tab_voos |>
+  dplyr::filter(nm_pais_origem == "BRASIL") |>
+  dplyr::distinct(sg_uf_origem) |>
+  dplyr::filter(sg_uf_origem != "") |> 
+  dplyr::collect()
+
+tab_aeroportos <- tab_voos |> 
+  dplyr::filter(nm_pais_origem == "BRASIL") |>
+  dplyr::distinct(nm_aerodromo_origem, sg_uf_origem) |>
+  dplyr::collect()
+
+RSQLite::dbWriteTable(
+  con,
+  "tab_datas",
+  datas,
+  overwrite = TRUE
+)
+
+RSQLite::dbWriteTable(
+  con,
+  "tab_natureza",
+  tab_natureza,
+  overwrite = TRUE
+)
+
+RSQLite::dbWriteTable(
+  con,
+  "tab_servico",
+  tab_servico,
+  overwrite = TRUE
+)
+
+RSQLite::dbWriteTable(
+  con,
+  "tab_estados",
+  tab_estados,
+  overwrite = TRUE
+)
+
+RSQLite::dbWriteTable(
+  con,
+  "tab_aeroportos",
+  tab_aeroportos,
+  overwrite = TRUE
+)

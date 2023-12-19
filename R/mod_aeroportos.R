@@ -74,11 +74,7 @@ mod_aeroportos_server <- function(id, con) {
 
     tab_voos <- dplyr::tbl(con, "tab_voos")
 
-    datas <- tab_voos |>
-      dplyr::summarise(
-        min = min(dt_partida_real, na.rm = TRUE),
-        max = max(dt_partida_real, na.rm = TRUE)
-      ) |> 
+    datas <- dplyr::tbl(con, "tab_datas") |>
       dplyr::collect()
 
     updateDateRangeInput(
@@ -93,18 +89,14 @@ mod_aeroportos_server <- function(id, con) {
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "uf",
-      choices = tab_voos |>
-        dplyr::filter(nm_pais_origem == "BRASIL") |>
-        dplyr::distinct(sg_uf_origem) |>
-        dplyr::filter(sg_uf_origem != "") |>
+      choices = dplyr::tbl(con, "tab_estados") |>
         dplyr::pull(sg_uf_origem) |>
         sort()
     )
 
     observe({
-      aeroportos <- tab_voos |>
-        dplyr::filter(nm_pais_origem == "BRASIL", sg_uf_origem == !!input$uf) |>
-        dplyr::distinct(nm_aerodromo_origem) |>
+      aeroportos <- dplyr::tbl(con, "tab_aeroportos") |>
+        dplyr::filter(sg_uf_origem == !!input$uf) |>
         dplyr::pull(nm_aerodromo_origem) |>
         sort()
 
@@ -116,7 +108,7 @@ mod_aeroportos_server <- function(id, con) {
     })
 
 
-    dados_filtrados <- reactive({
+    dados_filtrados <- eventReactive(input$filtrar, {
       req(input$aeroporto)
       tab_voos |>
         dplyr::filter(
@@ -124,7 +116,7 @@ mod_aeroportos_server <- function(id, con) {
           dt_partida_real >= !!input$periodo[1],
           sg_uf_origem == !!input$uf,
           nm_aerodromo_origem == !!input$aeroporto,
-           ds_servico_tipo_linha  == "PASSAGEIRO"
+          ds_servico_tipo_linha == "PASSAGEIRO"
         )
     })
 
@@ -138,6 +130,114 @@ mod_aeroportos_server <- function(id, con) {
         bslib::value_box(
           title = "Média de passageiros",
           showcase = bsicons::bs_icon("people-fill")
+        )
+    })
+
+    output$media_lotacao <- renderUI({
+      dados_filtrados() |>
+        dplyr::mutate(
+          num_passageiros = nr_passag_pagos + nr_passag_gratis,
+          nr_assentos_ofertados = as.numeric(nr_assentos_ofertados)
+        ) |>
+        dplyr::mutate(
+          lotacao = num_passageiros / nr_assentos_ofertados
+        ) |>
+        dplyr::select(num_passageiros, nr_assentos_ofertados, lotacao) |>
+        dplyr::summarise(
+          locacao_media = mean(num_passageiros / nr_assentos_ofertados, na.rm = TRUE)
+        ) |>
+        dplyr::pull(locacao_media) |>
+        scales::percent(accuracy = 0.1) |>
+        bslib::value_box(
+          title = "Lotação média",
+          showcase = bsicons::bs_icon("airplane-fill")
+        )
+    })
+
+    output$media_peso_bagagem <- renderUI({
+      dados_filtrados() |>
+        dplyr::summarise(
+          peso_medio = mean(kg_bagagem_livre + kg_bagagem_excesso, na.rm = TRUE)
+        ) |>
+        dplyr::pull(peso_medio) |>
+        round() |>
+        bslib::value_box(
+          title = "Peso médio de bagagem",
+          showcase = bsicons::bs_icon("bag-fill")
+        )
+    })
+
+    output$tabela_destinos <- reactable::renderReactable({
+      dados_filtrados() |>
+        dplyr::group_by(nm_aerodromo_destino, sg_uf_destino) |>
+        dplyr::summarise(
+          voos = dplyr::n()
+        ) |>
+        dplyr::arrange(desc(voos)) |>
+        head(10) |>
+        dplyr::collect() |>
+        reactable::reactable(
+          columns = list(
+            nm_aerodromo_destino = reactable::colDef(
+              name = "Aeroporto",
+              minWidth = 200
+            ),
+            sg_uf_destino = reactable::colDef(
+              name = "Estado",
+              minWidth = 100
+            ),
+            voos = reactable::colDef(
+              name = "Número de voos",
+              minWidth = 100
+            )
+          ),
+          defaultColDef = reactable::colDef(
+            minWidth = 100
+          ),
+          striped = TRUE
+        )
+    })
+
+    dados_filtrados_destino <- eventReactive(input$filtrar, {
+      req(input$aeroporto)
+      tab_voos |>
+        dplyr::filter(
+          dt_partida_real <= !!input$periodo[2],
+          dt_partida_real >= !!input$periodo[1],
+          sg_uf_destino == !!input$uf,
+          nm_aerodromo_destino == !!input$aeroporto,
+          ds_servico_tipo_linha == "PASSAGEIRO"
+        ) 
+    })
+
+    output$tabela_origens <- reactable::renderReactable({
+      dados_filtrados_destino() |>
+        dplyr::group_by(nm_aerodromo_origem, sg_uf_origem) |>
+        dplyr::summarise(
+          voos = dplyr::n()
+        ) |>
+        dplyr::arrange(desc(voos)) |>
+        head(10) |>
+        dplyr::collect() |>
+        reactable::reactable(
+          columns = list(
+            nm_aerodromo_origem = reactable::colDef(
+              name = "Aeroporto",
+              minWidth = 200
+            ),
+            sg_uf_origem = reactable::colDef(
+              name = "Estado",
+              minWidth = 100
+            ),
+            voos = reactable::colDef(
+              name = "Número de voos",
+              minWidth = 100
+            )
+          ),
+          defaultColDef = reactable::colDef(
+            minWidth = 100
+          ),
+          striped = TRUE
         )
     })
   })
