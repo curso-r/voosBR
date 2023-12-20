@@ -4,10 +4,10 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
 #'
-#' @importFrom shiny NS tagList 
-mod_filtros_ui <- function(id){
+#' @importFrom shiny NS tagList
+mod_filtros_ui <- function(id) {
   ns <- NS(id)
   tagList(
     h6("Filtros"),
@@ -43,9 +43,9 @@ mod_filtros_ui <- function(id){
 
 #' filtros Server Functions
 #'
-#' @noRd 
+#' @noRd
 mod_filtros_server <- function(id, con) {
-  moduleServer( id, function(input, output, session) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
     tab_voos <- dplyr::tbl(con, "tab_voos")
@@ -62,8 +62,8 @@ mod_filtros_server <- function(id, con) {
       max = datas$max
     )
 
-    opcoes_natureza <- dplyr::tbl(con, "tab_natureza") |> 
-        dplyr::pull(ds_natureza_tipo_linha)
+    opcoes_natureza <- dplyr::tbl(con, "tab_natureza") |>
+      dplyr::pull(ds_natureza_tipo_linha)
 
     shinyWidgets::updatePickerInput(
       session = session,
@@ -72,8 +72,8 @@ mod_filtros_server <- function(id, con) {
       selected = opcoes_natureza
     )
 
-    opcoes_servico <- dplyr::tbl(con, "tab_servico") |> 
-        dplyr::pull(ds_servico_tipo_linha)
+    opcoes_servico <- dplyr::tbl(con, "tab_servico") |>
+      dplyr::pull(ds_servico_tipo_linha)
 
     shinyWidgets::updatePickerInput(
       session = session,
@@ -82,22 +82,26 @@ mod_filtros_server <- function(id, con) {
       selected = opcoes_servico
     )
 
-    dados_filtrados <- eventReactive(input$filtrar, {
-      tab_voos |>
-        dplyr::filter(
-          dt_partida_real <= !!input$periodo[2] &
-            dt_partida_real >= !!input$periodo[1],
-          ds_natureza_tipo_linha %in% !!input$natureza_voo,
-          ds_servico_tipo_linha %in% !!input$tipo_servico
-        )
+    dados_filtrados <- eventReactive(input$filtrar, ignoreNULL = FALSE, {
+      if (input$filtrar == 0) {
+        tibble::tibble()
+      } else {
+        tab_voos |>
+          dplyr::filter(
+            dt_partida_real <= !!input$periodo[2] &
+              dt_partida_real >= !!input$periodo[1],
+            ds_natureza_tipo_linha %in% !!input$natureza_voo,
+            ds_servico_tipo_linha %in% !!input$tipo_servico
+          )
+      }
     })
-    
+
     return(dados_filtrados)
   })
 }
-    
+
 ## To be copied in the UI
 # mod_filtros_ui("filtros_1")
-    
+
 ## To be copied in the server
 # mod_filtros_server("filtros_1")

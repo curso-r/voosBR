@@ -12,7 +12,7 @@ mod_aeroportos_ui <- function(id) {
   tagList(
     bslib::page_sidebar(
       fillable = FALSE,
-      sidebar = bslib::sidebar(
+      sidebar = sidebar_custom(
         class = "overflow-visible",
         dateRangeInput(
           inputId = ns("periodo"),
@@ -129,7 +129,11 @@ mod_aeroportos_server <- function(id, con) {
         round() |>
         bslib::value_box(
           title = "Média de passageiros",
-          showcase = bsicons::bs_icon("people-fill")
+          showcase = bsicons::bs_icon("people-fill"),
+          theme = bslib::value_box_theme(
+            bg = "#071e41",
+            fg = "#fff"
+          )
         )
     })
 
@@ -150,7 +154,11 @@ mod_aeroportos_server <- function(id, con) {
         scales::percent(accuracy = 0.1) |>
         bslib::value_box(
           title = "Lotação média",
-          showcase = bsicons::bs_icon("airplane-fill")
+          showcase = bsicons::bs_icon("airplane-fill"),
+          theme = bslib::value_box_theme(
+            bg = "#071e41",
+            fg = "#fff"
+          )
         )
     })
 
@@ -163,7 +171,11 @@ mod_aeroportos_server <- function(id, con) {
         round() |>
         bslib::value_box(
           title = "Peso médio de bagagem",
-          showcase = bsicons::bs_icon("bag-fill")
+          showcase = bsicons::bs_icon("bag-fill"),
+          theme = bslib::value_box_theme(
+            bg = "#071e41",
+            fg = "#fff"
+          )
         )
     })
 

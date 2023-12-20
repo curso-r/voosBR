@@ -12,7 +12,10 @@ mod_visao_geral_ui <- function(id) {
   tagList(
     bslib::page_sidebar(
       fillable = FALSE,
-      sidebar = bslib::sidebar(
+      # theme = bslib::bs_theme(
+      #   "bs-btn-color" = "#fff"
+      # ),
+      sidebar = sidebar_custom(
         mod_filtros_ui(ns("filtros_1"))
       ),
       bslib::card(
@@ -20,7 +23,8 @@ mod_visao_geral_ui <- function(id) {
           "Série histórica do número de vôos"
         ),
         bslib::card_body(
-          echarts4r::echarts4rOutput(ns("serie_historica"))
+          echarts4r::echarts4rOutput(ns("serie_historica")) |>
+            shinycssloaders::withSpinner()
         )
       ),
       bslib::layout_columns(
@@ -60,6 +64,11 @@ mod_visao_geral_server <- function(id, con) {
     dados_filtrados <- mod_filtros_server("filtros_1", con)
 
     output$serie_historica <- echarts4r::renderEcharts4r({
+      validate(need(
+        contar_linhas(dados_filtrados()) > 0,
+        "Clique no botão aplicar filtros para gerar os resultados."
+      ))
+
       dados_filtrados() |>
         dplyr::group_by(dt_partida_real) |>
         dplyr::summarise(n = n()) |>
@@ -92,10 +101,12 @@ mod_visao_geral_server <- function(id, con) {
             )
           )
         ) |>
-        echarts4r::e_legend(show = FALSE)
+        echarts4r::e_legend(show = FALSE) |> 
+        echarts4r::e_color(color = "#071e41")
     })
 
     output$tabela_aeroportos_part <- reactable::renderReactable({
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::group_by(nm_aerodromo_origem, nm_municipio_origem) |>
         dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
@@ -128,6 +139,7 @@ mod_visao_geral_server <- function(id, con) {
     })
 
     output$tabela_aeroportos_cheg <- reactable::renderReactable({
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::group_by(nm_aerodromo_destino, nm_municipio_destino) |>
         dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
@@ -160,6 +172,7 @@ mod_visao_geral_server <- function(id, con) {
     })
 
     output$tabela_empresas <- reactable::renderReactable({
+      req(nrow(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::group_by(nm_empresa) |>
         dplyr::summarise(n = dplyr::n()) |>

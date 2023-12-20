@@ -11,7 +11,7 @@ mod_voos_ui <- function(id) {
   ns <- NS(id)
   tagList(
     bslib::page_sidebar(
-      sidebar = bslib::sidebar(
+      sidebar = sidebar_custom(
         mod_filtros_ui(ns("filtros_1"))
       ),
       bslib::card(
@@ -36,6 +36,7 @@ mod_voos_server <- function(id, con, tipo_aeroporto) {
     dados_filtrados <- mod_filtros_server("filtros_1", con)
 
     output$tab_aeroportos_voos <- reactable::renderReactable({
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::rename(
           nm_aerodromo = glue::glue("nm_aerodromo_{tipo_aeroporto}"),

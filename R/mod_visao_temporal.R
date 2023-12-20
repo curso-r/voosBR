@@ -12,7 +12,7 @@ mod_visao_temporal_ui <- function(id) {
   tagList(
     bslib::page_sidebar(
       fillable = FALSE,
-      sidebar = bslib::sidebar(
+      sidebar = sidebar_custom(
         mod_filtros_ui(ns("filtros_1"))
       ),
       bslib::navset_card_tab(
@@ -55,6 +55,7 @@ mod_visao_temporal_server <- function(id, con) {
     dados_filtrados <- mod_filtros_server("filtros_1", con)
 
     output$ec_sazo_anual <- echarts4r::renderEcharts4r({
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::filter(nr_mes_partida_real != "") |>
         dplyr::count(nr_ano_partida_real, nr_mes_partida_real) |>
@@ -71,6 +72,7 @@ mod_visao_temporal_server <- function(id, con) {
     })
 
     output$ec_sazo_mensal <- echarts4r::renderEcharts4r({
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::filter(nr_dia_partida_real != "") |>
         dplyr::count(nr_dia_partida_real, nr_mes_partida_real, nr_ano_partida_real) |>
@@ -87,6 +89,7 @@ mod_visao_temporal_server <- function(id, con) {
     })
 
     output$ec_sazo_semanal <- echarts4r::renderEcharts4r({
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::filter(nm_dia_semana_partida_real != "") |>
         dplyr::count(nm_dia_semana_partida_real, nr_semana_partida_real, nr_ano_partida_real) |>
@@ -107,6 +110,7 @@ mod_visao_temporal_server <- function(id, con) {
     })
 
     output$ec_sazo_diaria <- echarts4r::renderEcharts4r({
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::filter(hr_partida_real != "") |>
         dplyr::mutate(

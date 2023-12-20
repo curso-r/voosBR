@@ -10,7 +10,11 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     bslib::page_navbar(
+      bg = "#04132a",
       title = "voosBR",
+      # theme = bslib::bs_theme(
+      #   "bs-btn-color" = "#fff"
+      # ),
       bslib::nav_panel(
         title = "Visão geral",
         mod_visao_geral_ui("visao_geral_1")
