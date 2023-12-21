@@ -172,7 +172,7 @@ mod_visao_geral_server <- function(id, con) {
     })
 
     output$tabela_empresas <- reactable::renderReactable({
-      req(nrow(dados_filtrados()) > 0)
+      req(contar_linhas(dados_filtrados()) > 0)
       dados_filtrados() |>
         dplyr::group_by(nm_empresa) |>
         dplyr::summarise(n = dplyr::n()) |>
